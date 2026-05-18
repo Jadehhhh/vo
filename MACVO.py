@@ -15,7 +15,7 @@ from Utility.Sandbox import Sandbox
 from Utility.Visualize import fig_plt, rr_plt
 from Utility.Timer import Timer
 
-
+"""
 def VisualizeRerunCallback(frame: StereoFrame, system: MACVO, pb: ColoredTqdm):
     rr.set_time_sequence("frame_idx", frame.frame_idx)
     
@@ -33,7 +33,7 @@ def VisualizeRerunCallback(frame: StereoFrame, system: MACVO, pb: ColoredTqdm):
     
     vo_points  = system.graph.get_match2point(system.graph.get_frame2match(system.graph.frames[-1:]))
     rr_plt.log_points("/world/vo_tracking", vo_points.data["pos_Tw"], vo_points.data["color"], vo_points.data["cov_Tw"], "sphere")
-    
+"""
 
 def VisualizeVRAMUsage(frame: StereoFrame, system: MACVO, pb: ColoredTqdm):
     if torch.cuda.is_available():
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     fig_plt.default_mode = "image" if args.saveplt else "none"
 
     def onFrameFinished(frame: StereoFrame, system: MACVO, pb: ColoredTqdm):
-        VisualizeRerunCallback(frame, system, pb)
+        #VisualizeRerunCallback(frame, system, pb)
         VisualizeVRAMUsage(frame, system, pb)
 
     # Initialize data source
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     
     system = MACVO[StereoFrame].from_config(asNamespace(exp_space.config))
     system.receive_frames(sequence, exp_space, on_frame_finished=onFrameFinished)
-    
+    """
     rr_plt.log_trajectory("/world/est"  , torch.tensor(np.load(exp_space.path("poses.npy"))[:, 1:]))
     try:
         rr_plt.log_points    ("/world/point_cloud", 
@@ -149,7 +149,7 @@ if __name__ == "__main__":
                                 "color")
     except RuntimeError:
         Logger.write("warn", "Unable to log full pointcloud - is mapping mode on?")
-    
+    """
     Timer.report()
     Timer.save_elapsed(exp_space.path("elapsed_time.json"))
 
