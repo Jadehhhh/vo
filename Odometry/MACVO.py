@@ -17,6 +17,13 @@ from Utility.Visualize import fig_plt
 from Utility.Extensions import ConfigTestable
 
 from .Interface import IOdometry
+import time
+
+def _sync_time() -> float:
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+    return time.perf_counter()
+
 
 T_SensorFrame = T.TypeVar("T_SensorFrame", bound=StereoFrame)
 
@@ -179,7 +186,11 @@ class MACVO(IOdometry[T_SensorFrame], ConfigTestable):
             return
         
         depth0          = self.prev_keyframe[2]
+        t0 = _sync_time() 
         depth1, match01 = self.Frontend.estimate_pair(frame0.stereo, frame1.stereo)
+        t1 = _sync_time()
+        if frame1.frame_idx < 20:
+            print(f"[TIME] frame={frame1.frame_idx} frontend={1000*(t1-t0):.2f} ms")
 
         # Receive optimization result from previous step (if exists) ####################
         # NOTE: should always writeback optimized pose to global map before selecting new 
