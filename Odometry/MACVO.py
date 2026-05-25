@@ -190,13 +190,17 @@ class MACVO(IOdometry[T_SensorFrame], ConfigTestable):
         depth1, match01 = self.Frontend.estimate_pair(frame0.stereo, frame1.stereo)
         t1 = _sync_time()
         if frame1.frame_idx < 20:
-            print(f"[TIME] frame={frame1.frame_idx} frontend={1000*(t1-t0):.2f} ms")
+           print(f"[TIME] frame={frame1.frame_idx} frontend={1000*(t1-t0):.2f} ms")
 
         # Receive optimization result from previous step (if exists) ####################
         # NOTE: should always writeback optimized pose to global map before selecting new 
         # keypoints (register new 3D point) on that frame.
+       # t_w0 = _sync_time()
         self.Optimizer.write_map(self.graph)
         for func in self.on_optimize_writeback: func(self)
+        #t_w1 = _sync_time()
+       # if frame1.frame_idx < 20:
+        #    Logger.write("info", f"[TIME] frame={frame1.frame_idx} write_map={1000*(t_w1-t_w0):.2f} ms")
         
         # Motion model provide an initial guess to the pose of frame1 ###################
         # Update motion model (this must be after write_back to get latest result)
@@ -322,7 +326,9 @@ class MACVO(IOdometry[T_SensorFrame], ConfigTestable):
             )
         
         # Add (dense) mapping points to the map #########################################
+
         if self.mapping:
+            t_m0 = _sync_time()
             map0_uv       = self.MappointSelector.select_point(frame0.stereo, 2000, depth0, depth1, match01)
             num_kp        = map0_uv.size(0)
             map0_d        = self.Frontend.retrieve_pixels(map0_uv, depth0.depth).squeeze(0)
@@ -346,6 +352,13 @@ class MACVO(IOdometry[T_SensorFrame], ConfigTestable):
                 "color" : map0_color,
             }))
             self.graph.frame2map.add(frame_idx, torch.tensor([num_map_orig], dtype=torch.long), torch.tensor([num_mappoint], dtype=torch.long))   # Associate frame -> map
+           # t_m1 = _sync_time()
+
+        #if frame1.frame_idx < 20:
+        #   Logger.write(
+        #      "info",
+        #       f"[TIME] frame={frame1.frame_idx} mapping={1000*(t_m1-t_m0):.2f} ms, num_mappoint={num_mappoint}"
+        #   )
 
     def push_keyframe(self, frame: T_SensorFrame, est_pose: pp.LieTensor | torch.Tensor, need_interp: bool=False) -> torch.Tensor:
         frame_idx = self.graph.frames.push(FrameNode.init({

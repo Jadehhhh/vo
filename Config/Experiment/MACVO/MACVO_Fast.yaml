@@ -35,7 +35,7 @@ Odometry:
     profile: false
 
     # Mapping mode provides the dense mapping
-    mapping: true
+    mapping: false
 
   cov:
     obs:
